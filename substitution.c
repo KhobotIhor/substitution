@@ -1,122 +1,106 @@
 #include <cs50.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
-bool is_key_valid(string key, int required_key_length);
-void encrypt(string plaintext, char ciphertext[], string key, int text_length);
+//declaring alphabet for further use
+const string alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+//declaring a function encrypt
+string encrypt(string text_input, string key);
 
 int main(int argc, string argv[])
 {
-    // if not key provided, or too many keys provided, return error
-    if (argc != 2)
+
+    //getting a key from the command-line arguments
+    string key = argv[1];
+
+
+    //if there are not 2 arguments then tell a user the correct usage
+    if(argc != 2)
     {
         printf("Usage: ./substitution key\n");
+
+        //return failure
         return 1;
     }
-
-    // get key from input to main function
-    string key = argv[1];
-    int required_key_length = 26;
-
-    // check for validity of key
-    if (!is_key_valid(key, required_key_length))
+    //if the key length is not 26 then ask user to choose a key of length 26
+    else if(strlen(key) != 26)
     {
-        // output error to user
-        printf("Key must contain %i unique letters only.", required_key_length);
-        return 1;
+        printf("key must contain 26 characters\n");
+
+        //return failure
+        return 2;
     }
-
-    // get plaintext from user
-    string plaintext = get_string("plaintext: ");
-
-    int text_length = strlen(plaintext);
-
-    // create array for ciphertext
-    char ciphertext[text_length];
-
-    // encrypting every char of plaintext as unique element into ciphertext array
-    encrypt(plaintext, ciphertext, key, text_length);
-
-    // display ciphertext to user char by char as a single string
-    printf("ciphertext: ");
-    for (int i = 0; i < text_length; i++)
+    else
     {
-        printf("%c", ciphertext[i]);
+        //if some chars in key are not uppercase then transform them to uppercase for a normal program work
+        for(int i = 0; i < 26; i++)
+        {
+            if(!isupper(key[i]))
+            {
+                key[i] = toupper(key[i]);
+            }
+        }
+
+        //ask user for a text to encrypt
+        string text_to_encrypt = get_string("plaintext: ");
+
+        //print encrypted text
+        printf("cyphertext: %s\n", encrypt(text_to_encrypt, key));
+
+        //return success
+        return 0;
     }
-    printf("\n");
 }
 
-// function for checking the validity of provided key
-bool is_key_valid(string key, int required_key_length)
+
+
+string encrypt(string text_input, string key)
 {
-    // get length of key provided by user
-    int key_length = strlen(key);
 
-    // check if provided key in equal to required key length
-    if (key_length != required_key_length)
-    {
-        // if no then return false
-        return false;
-    }
+    //declaring a variable text_output whic will be outputed by function at the end
+    string text_output = text_input;
 
-    // check every character of key
-    for (int i = 0; i < key_length; i++)
+
+    //interate through each char of the text_input
+    for(int i_text = 0; i_text < 26; i_text++)
     {
-        // check if char is alphabetical
-        if (!isalpha(key[i]))
+
+        //check if char is alphabetical
+        if (isalpha(text_output[i_text]))
         {
-            // if no then return false
-            return false;
-        }
-        // we need to go to pre-last character to make sure we do not go out of key string
-        // boundaries
-        if (i < key_length - 1)
-        {
-            // check wheather every char in key in unique, and is not repeated further in the key,
-            // be it capital- or lower-case
-            for (int j = i + 1; j < key_length; j++)
+            //substitute variable to uppercase char for comparison with alphabet letters
+            char letter_sub = toupper(text_output[i_text]);
+
+            //iterate through each letter of the alphabet
+            for(int i_alpha = 0; i_alpha < 26; i_alpha++)
             {
-                if (toupper(key[i]) == toupper(key[j]))
+
+                //check if uppercased text_input letter is equal to the alphabet letter
+                if (letter_sub == alpha[i_alpha])
                 {
-                    // if char is not unique then return false
-                    return false;
+
+                    //if letter was initially uppercased then it will remain uppercased at the end
+                    if(isupper(text_output[i_text]))
+                    {
+
+                        //make the text_output letter equal to the respective letter in the key
+                        text_output[i_text] = key[i_alpha];
+                    }
+
+                    //if letter was initially lowercase then it will remain lowercase
+                    else
+                    {
+
+                        //make the text_output letter equal to the respective letter in the key
+                        text_output[i_text] = tolower(key[i_alpha]);
+                    }
                 }
             }
         }
     }
-    return true;
-}
 
-// function for encrypting every char of plaintext into ciphertext array using key provided by user
-void encrypt(string plaintext, char ciphertext[], string key, int text_length)
-{
-
-    // encrypting every char of plaintext
-    for (int i = 0; i < text_length; i++)
-    {
-        // make sure the case(capital- or lower-) of every char in plaintext is preserved in
-        // ciphertext
-        if (isupper(plaintext[i]))
-        {
-            // get index of char in key that corresponds to char in plaintext(alphabetical)
-            int index = plaintext[i] - 'A';
-
-            // add encrypted char to ciphertext array
-            ciphertext[i] = toupper(key[index]);
-        }
-        // same as before but with lower-case char
-        else if (islower(plaintext[i]))
-        {
-            int index = plaintext[i] - 'a';
-            ciphertext[i] = tolower(key[index]);
-        }
-
-        // if char is not lower-case nor upper-case, then it is not alphabetical and we must
-        // preserve it as it is
-        else
-        {
-            ciphertext[i] = plaintext[i];
-        }
-    }
+    //return encrypted text
+    return text_output;
 }
